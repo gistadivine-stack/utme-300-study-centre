@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102b46">
+<title>UTME 300 Study Centre</title>
+<style>
+:root{--navy:#102b46;--blue:#1e5b86;--gold:#f2b84b;--paper:#f5f7fa;--ink:#172536;--muted:#607184;--line:#dce4ec;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(120deg,#102b46,#1e5b86);color:white;padding:28px max(20px,calc((100% - 1100px)/2)) 24px}
+header h1{margin:0;font-size:clamp(1.7rem,4vw,2.5rem)}header p{margin:8px 0 0;color:#e3edf5}
+.wrap{max-width:1100px;margin:auto;padding:22px 18px 50px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:-2px}
+.stat,.panel,.subject-card{background:white;border:1px solid var(--line);border-radius:14px;padding:16px}.stat strong{display:block;font-size:1.4rem;color:var(--blue)}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-top:18px}
+nav{align-self:start;position:sticky;top:12px}.navbtn{display:block;width:100%;text-align:left;padding:12px;border:0;border-radius:10px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;margin:3px 0}.navbtn.active,.navbtn:hover{background:#e8f0f7;color:var(--blue);font-weight:700}
+h2{margin:0 0 8px}h3{margin:18px 0 6px}p{margin:7px 0}.muted{color:var(--muted)}.pill{display:inline-block;background:#fff2d8;color:#79520c;border-radius:20px;padding:3px 9px;font-size:.8rem;font-weight:700}
+button,.action{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font:inherit;font-weight:650}
+button.secondary{background:#e8f0f7;color:var(--blue)}.session{border:1px solid var(--line);border-radius:12px;padding:15px;margin:12px 0;background:#fff}
+.session-top{display:flex;gap:10px;justify-content:space-between;align-items:start}.session small{color:var(--muted)}
+label.check{display:flex;gap:9px;align-items:center;margin-top:12px;color:#235d3b;font-weight:650}input[type=checkbox]{width:18px;height:18px}
+.question{background:#f5f8fb;padding:12px;border-radius:10px;margin:10px 0}.question label{display:block;margin:6px 0}.feedback{font-weight:700;margin-top:8px}
+select{padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}
+footer{margin-top:28px;color:var(--muted);font-size:.88rem}
+@media(max-width:720px){.layout{grid-template-columns:1fr}nav{position:static;display:grid;grid-template-columns:repeat(2,1fr);gap:2px}.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><h1>UTME 300 Study Centre</h1><p>Your guided study space for CRS, Literature, Government and Use of English.</p></header>
+<div class="wrap">
+<div class="stats">
+ <div class="stat"><strong id="doneCount">0</strong><span>Sessions completed</span></div>
+ <div class="stat"><strong>4</strong><span>UTME subjects</span></div>
+ <div class="stat"><strong id="percent">0%</strong><span>Overall progress</span></div>
+</div>
+<div class="layout">
+<nav aria-label="Subjects">
+ <button class="navbtn active" data-subject="overview">🏠 Overview</button>
+ <button class="navbtn" data-subject="crs">✝️ CRS</button>
+ <button class="navbtn" data-subject="literature">📚 Literature</button>
+ <button class="navbtn" data-subject="government">🏛️ Government</button>
+ <button class="navbtn" data-subject="english">🔤 Use of English</button>
+</nav>
+<main id="content" class="panel" aria-live="polite"></main>
+</div>
+<footer>Progress is saved in this browser on this device using local storage. It will remain after closing the page, but may not sync to another device or browser. Clear browser data and private browsing may remove it. Study topics are a starter guide; always compare them with the current official JAMB syllabus and prescribed texts.</footer>
+</div>
+<script>
+const subjects = {
+crs:{name:"Christian Religious Studies (CRS)",intro:"Study biblical themes, people, teachings and their applications. Read the relevant passages in your Bible alongside each lesson.",weeks:[
+["The call and leadership of Moses","Exodus 3–4; Exodus 12–14","The call of Moses shows God's initiative, the importance of obedience and the responsibility of leadership. The Exodus demonstrates deliverance, faith and the consequences of disobedience."],
+["Covenant and the law","Exodus 19–20; Deuteronomy 5–6","A covenant is a solemn agreement. At Sinai, Israel received laws that shaped worship and community life. The Ten Commandments teach devotion to God and respect for other people."],
+["Kingship in Israel","1 Samuel 8–10; 2 Samuel 5–7","Israel requested a king. Saul became the first king, followed by David. David's reign is associated with Jerusalem and the covenant promise. Leadership brings duties and accountability."],
+["The prophets and social justice","Amos 5; Isaiah 1; Micah 6","The prophets challenged empty worship, injustice and oppression. True religion includes fairness, mercy, humility and care for vulnerable people."],
+["The birth and ministry of Jesus","Luke 1–4; Matthew 5–7","The Gospel accounts present Jesus' birth, baptism, temptation and teaching. The Sermon on the Mount emphasises humility, mercy, integrity and love."],
+["Parables, miracles and discipleship","Luke 10; Luke 15; Mark 4–5","Parables use familiar stories to teach spiritual truths. Miracles reveal compassion and divine power. Discipleship involves commitment, service and faith."],
+["Death, resurrection and the early church","Luke 22–24; Acts 1–4","The resurrection is central to Christian belief. Acts describes the coming of the Holy Spirit, the growth of the church, fellowship and witness."]
+]},
+literature:{name:"Literature in English",intro:"Use the current JAMB-recommended texts for your examination year. This guide teaches the skills needed to analyse prose, drama and poetry.",weeks:[
+["Introduction to literary genres","Prose, drama and poetry","Prose uses sentences and paragraphs; drama is written for performance; poetry uses concentrated language, sound and structure. Identify the genre before analysing a text."],
+["Elements of prose","Plot, setting, characterisation, theme, point of view","Plot is the sequence of events; setting is time and place; characterisation presents people; theme is a central idea; point of view is the perspective through which a story is told."],
+["Elements of drama","Dialogue, stage directions, acts, scenes, conflict","Drama communicates through speech and action. Stage directions guide performance. Conflict drives dramatic action and may be internal or external."],
+["Poetry: form and structure","Stanza, line, rhythm, rhyme, tone, mood","Examine how a poem is arranged and sounds. Tone is the speaker's attitude; mood is the feeling created in the reader. Support interpretations with evidence from the poem."],
+["Figures of speech and imagery","Simile, metaphor, personification, irony, symbolism","A simile compares using 'like' or 'as'; a metaphor makes a direct comparison; personification gives human qualities to non-human things. Explain the effect in context."],
+["Literary appreciation","Theme, diction, context and evidence","Move from identifying a feature to explaining its effect. A strong interpretation links a writer's choice to character, theme, atmosphere or meaning."],
+["Prescribed-text revision","Plot, characters, themes, style and context","For every prescribed text, prepare a plot outline, character map, theme list, key events and brief evidence. Check the official JAMB list for the correct examination year."]
+]},
+government:{name:"Government",intro:"Learn political concepts, institutions, constitutions and Nigeria's political development. Use examples carefully and distinguish facts from opinions.",weeks:[
+["Meaning and scope of government","Power, authority, legitimacy, sovereignty","Government refers to the institutions and processes through which a state is governed. Power is the ability to influence; authority is recognised right; legitimacy is accepted rightfulness."],
+["Basic concepts and political systems","Democracy, monarchy, dictatorship, federalism","Political systems organise power differently. Democracy relies on participation and accountability; federalism constitutionally divides powers between levels of government."],
+["Constitution and rule of law","Constitutionalism, separation of powers, checks and balances","A constitution sets out the structure and limits of government. Separation of powers distributes functions, while checks and balances help prevent abuse."],
+["Organs of government","Legislature, executive and judiciary","The legislature makes laws, the executive implements policy and the judiciary interprets laws. Their relationship is shaped by the constitution."],
+["Political parties and elections","Party systems, electoral processes, representation","Political parties organise interests and contest elections. Credible elections require clear rules, voter participation, transparency and impartial administration."],
+["Nigerian constitutional development","Colonial administration and constitutional changes","Study major constitutional milestones, the movement toward self-government and the development of federal arrangements. Learn dates and features from a reliable syllabus-aligned text."],
+["Public administration and local government","Civil service, public corporations, local councils","Public administration implements government decisions. Local government brings administration closer to communities and operates within constitutional and legal limits."]
+]},
+english:{name:"Use of English",intro:"Build accuracy in comprehension, vocabulary, grammar, oral forms and summary. Read widely and practise questions regularly.",weeks:[
+["Reading comprehension","Main idea, inference, tone, purpose and context","Read the passage once for the overall message, then again for evidence. Distinguish what the writer states from what can reasonably be inferred."],
+["Vocabulary and lexical relations","Synonyms, antonyms, words in context, idioms","Meaning depends on context. Replace a word with a possible synonym and check whether the sentence still makes sense. Learn common idioms as complete expressions."],
+["Grammar: parts of speech and concord","Nouns, verbs, pronouns, modifiers, subject–verb agreement","Identify the subject and main verb before checking agreement. Watch for intervening phrases that can distract from the true subject."],
+["Sentence structure and punctuation","Clauses, phrases, tense, voice, reported speech","A clause contains a subject and a verb. Check tense consistency, correct word order and punctuation that clarifies meaning."],
+["Oral English: vowels and consonants","Sound contrasts, stress and intonation","Focus on sounds rather than spelling. Practise identifying minimal pairs, syllable stress and how intonation can signal questions or emphasis."],
+["Summary skills","Topic sentences, key points, concise expression","Identify the central points, remove examples and repetition, and express each point clearly in your own words without changing its meaning."],
+["Mixed practice and exam technique","Time management and question review","Read instructions carefully, answer what is asked and manage time. Return to difficult questions after completing those you can answer confidently."]
+]}
+};
+const storeKey="utme300-progress-v1";
+let progress={};try{progress=JSON.parse(localStorage.getItem(storeKey)||"{}")}catch(e){}
+const total=Object.values(subjects).reduce((n,s)=>n+s.weeks.length,0);
+function save(){localStorage.setItem(storeKey,JSON.stringify(progress));updateStats()}
+function updateStats(){let done=Object.values(progress).filter(Boolean).length;document.getElementById("doneCount").textContent=done;document.getElementById("percent").textContent=Math.round(done/total*100)+"%"}
+function overview(){let done=Object.values(progress).filter(Boolean).length;return `<h2>Welcome to your study centre</h2><p class="muted">A steady plan, one session at a time. Choose a subject to open its scheme of work and lesson notes.</p><div class="session"><span class="pill">YOUR TARGET</span><h3>Build strong UTME readiness</h3><p>Work through the sessions, read the suggested passages or texts, then answer the review questions before marking a session complete.</p><p><strong>${done} of ${total}</strong> sessions completed.</p></div><h3>How to use the centre</h3><ol><li>Choose a subject from the left.</li><li>Study the topic and its suggested reading.</li><li>Answer the review questions.</li><li>Mark the session complete to save your progress.</li></ol><p class="muted">The weekly order is a flexible guide. Adjust it to your school timetable and the latest JAMB syllabus.</p>`}
+function subjectView(id){let s=subjects[id];return `<h2>${s.name}</h2><p class="muted">${s.intro}</p><h3>Scheme of work and study sessions</h3>${s.weeks.map((w,i)=>{let k=id+"-"+i;let checked=!!progress[k];let qs=questions[id][i];return `<section class="session"><div class="session-top"><div><span class="pill">SESSION ${i+1}</span><h3>${w[0]}</h3><small>Suggested reading: ${w[1]}</small></div><span>${checked?"✅":"📖"}</span></div><p>${w[2]}</p><h3>Review questions</h3>${qs.map((q,j)=>`<div class="question"><strong>${j+1}. ${q.q}</strong>${q.a.map((a,n)=>`<label><input type="radio" name="${k}-q${j}" value="${n}"> ${String.fromCharCode(65+n)}. ${a}</label>`).join("")}<div class="feedback" id="${k}-f${j}"></div></div>`).join("")}<button class="secondary" onclick="checkAnswers('${k}',${i},'${id}')">Check answers</button><label class="check"><input type="checkbox" ${checked?"checked":""} onchange="toggleDone('${k}',this.checked)"> Mark session complete</label></section>`}).join("")}`}
+const questions={
+crs:[
+[{q:"Where is the call of Moses narrated?",a:["Exodus 3","Genesis 1","Ruth 2"],c:0},{q:"The Exodus mainly illustrates which idea?",a:["Deliverance","Empire building","Agriculture"],c:0}],
+[{q:"A covenant is best described as a...",a:["Solemn agreement","War strategy","Harvest festival"],c:0},{q:"The Ten Commandments are found in...",a:["Exodus 20","Amos 5","Luke 15"],c:0}],
+[{q:"Who was Israel's first king?",a:["Saul","David","Solomon"],c:0},{q:"David made Jerusalem his...",a:["Capital","Harbour","Colony"],c:0}],
+[{q:"The prophets strongly criticised...",a:["Injustice","Kindness","Honesty"],c:0},{q:"Micah 6:8 highlights justice, mercy and...",a:["Humility","Wealth","Military power"],c:0}],
+[{q:"The Sermon on the Mount is associated with...",a:["Jesus","Moses","Samuel"],c:0},{q:"Jesus' temptation is narrated in the Gospels. True or false?",a:["True","False","Not mentioned"],c:0}],
+[{q:"A parable is usually...",a:["A story teaching a lesson","A census","A royal decree"],c:0},{q:"Discipleship involves...",a:["Commitment and service","Self-promotion only","Avoiding responsibility"],c:0}],
+[{q:"The book of Acts describes the early...",a:["Church","Roman senate","Babylonian army"],c:0},{q:"The resurrection is central to...",a:["Christian belief","Greek democracy","Israel's monarchy"],c:0}]
+],
+literature:[
+[{q:"Which genre is commonly written for performance?",a:["Drama","Prose","Biography"],c:0},{q:"Poetry often makes concentrated use of...",a:["Sound and imagery","Footnotes only","Stage props"],c:0}],
+[{q:"The time and place of a story is its...",a:["Setting","Plot","Diction"],c:0},{q:"The central idea of a literary work is its...",a:["Theme","Rhyme","Cast"],c:0}],
+[{q:"Instructions about movement and delivery in a play are...",a:["Stage directions","Stanzas","Narrative voice"],c:0},{q:"The struggle that drives a play is...",a:["Conflict","Setting","Rhyme"],c:0}],
+[{q:"The speaker's attitude is the...",a:["Tone","Plot","Setting"],c:0},{q:"A group of lines in a poem is a...",a:["Stanza","Scene","Chapter"],c:0}],
+[{q:"A direct comparison without 'like' or 'as' is a...",a:["Metaphor","Simile","Alliteration"],c:0},{q:"Giving human qualities to a non-human thing is...",a:["Personification","Hyperbole","Pun"],c:0}],
+[{q:"A sound or object that represents a wider idea is a...",a:["Symbol","Stage direction","Narrator"],c:0},{q:"A sound literary interpretation should be supported by...",a:["Textual evidence","Guesswork","The cover colour"],c:0}],
+[{q:"For each prescribed text, students should know...",a:["Plot, characters and themes","Only the author's age","Only page count"],c:0},{q:"The prescribed text list should be checked for...",a:["The correct exam year","The book's colour","The publisher's logo"],c:0}]
+],
+government:[
+[{q:"The accepted right to rule is called...",a:["Legitimacy","Population","Territory"],c:0},{q:"The ability to influence others is...",a:["Power","A constitution","A census"],c:0}],
+[{q:"A system with constitutionally divided levels of authority is...",a:["Federalism","Absolute monarchy","Unitary dictatorship"],c:0},{q:"Democracy emphasises...",a:["Public participation","Hereditary rule only","Rule without consent"],c:0}],
+[{q:"The fundamental law of a state is its...",a:["Constitution","Manifesto","Campaign poster"],c:0},{q:"The rule of law means that...",a:["Everyone is subject to the law","Leaders are above the law","Courts make all policies"],c:0}],
+[{q:"Which organ interprets laws?",a:["Judiciary","Legislature","Executive"],c:0},{q:"The legislature primarily...",a:["Makes laws","Conducts trials","Implements every policy"],c:0}],
+[{q:"Political parties mainly seek to...",a:["Contest elections and organise interests","Replace courts","Abolish citizenship"],c:0},{q:"A credible election requires...",a:["Transparent procedures","Secret result changes","Unequal voting rights"],c:0}],
+[{q:"Constitutional development concerns changes to...",a:["The framework of government","Weather patterns","Trade routes only"],c:0},{q:"Nigeria became independent in...",a:["1960","1950","1979"],c:0}],
+[{q:"The civil service helps to...",a:["Implement government policies","Interpret all laws","Conduct elections alone"],c:0},{q:"Local government is intended to bring administration...",a:["Closer to communities","Outside the country","Only to the capital"],c:0}]
+],
+english:[
+[{q:"The central message of a passage is its...",a:["Main idea","Font size","Page number"],c:0},{q:"An inference is a conclusion based on...",a:["Evidence and reasoning","A random guess","The title alone"],c:0}],
+[{q:"A word's meaning in a sentence is its meaning in...",a:["Context","Isolation only","Alphabetical order"],c:0},{q:"A synonym is a word with...",a:["Similar meaning","Opposite meaning","No meaning"],c:0}],
+[{q:"Subject–verb concord is agreement between...",a:["Subject and verb","Noun and comma","Title and paragraph"],c:0},{q:"In 'The list of names is long', the main subject is...",a:["List","Names","Long"],c:0}],
+[{q:"A clause normally contains...",a:["A subject and a verb","Only an adjective","A punctuation mark"],c:0},{q:"Punctuation helps to make writing...",a:["Clearer","Longer only","More informal"],c:0}],
+[{q:"Oral English focuses on...",a:["Speech sounds","Spelling alone","Handwriting"],c:0},{q:"The emphasis placed on a syllable is called...",a:["Stress","Rhyme","Clause"],c:0}],
+[{q:"A good summary removes...",a:["Repetition and minor details","All key points","The original meaning"],c:0},{q:"A summary should preserve...",a:["The main meaning","Every example","The writer's exact sentences"],c:0}],
+[{q:"A good exam strategy includes...",a:["Reading instructions carefully","Ignoring question wording","Spending all time on one item"],c:0},{q:"When stuck on a question, it can help to...",a:["Move on and return later","Leave the whole paper","Choose without reading"],c:0}]
+]
+};
+function checkAnswers(k,i,id){let qs=questions[id][i],score=0;qs.forEach((q,j)=>{let chosen=document.querySelector(`input[name="${k}-q${j}"]:checked`);let f=document.getElementById(`${k}-f${j}`);if(chosen&&Number(chosen.value)===q.c){score++;f.textContent="Correct ✓";f.style.color="#235d3b"}else{f.textContent="Answer: "+String.fromCharCode(65+q.c);f.style.color="#9a4b20"}});alert(`You scored ${score}/${qs.length}. Review the explanations and try again.`)}
+function toggleDone(k,v){if(v)progress[k]=true;else delete progress[k];save();let active=document.querySelector(".navbtn.active").dataset.subject;render(active)}
+function render(id){document.getElementById("content").innerHTML=id==="overview"?overview():subjectView(id);document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.subject===id));}
+document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>render(b.dataset.subject)));
+updateStats();render("overview");
+</script>
+</body></html>
