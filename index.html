@@ -543,6 +543,9 @@ client.auth.onAuthStateChange((event) => {
   });
 
   showScreen(false);
+ if (window.utmePasswordRecovery) {
+  showPasswordReset();
+ }
 })();
 </script>
 
