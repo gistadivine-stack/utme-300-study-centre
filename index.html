@@ -381,32 +381,28 @@ updateStats();render("overview");
 })();
 </script>
 
+
 <script>
 (() => {
   const box = document.getElementById("accountBox");
   const signIn = document.getElementById("signInBtn");
   const signUp = document.getElementById("signUpBtn");
   const message = document.getElementById("accountMessage");
+  const client = window.utmeSupabase;
 
-  if (!box || !signIn || !signUp) return;
+  if (!box || !client) return;
 
   const heading = box.querySelector("h2");
   const description = box.querySelector("p");
+  const email = document.getElementById("studentEmail");
+  const password = document.getElementById("studentPassword");
 
   const switchButton = document.createElement("button");
-  switchButton.id = "switchAccountScreen";
   switchButton.type = "button";
-  switchButton.style.marginTop = "12px";
-  switchButton.style.background = "transparent";
-  switchButton.style.color = "inherit";
-  switchButton.style.border = "1px solid currentColor";
 
   const forgotButton = document.createElement("button");
-  forgotButton.id = "forgotPasswordInfo";
   forgotButton.type = "button";
   forgotButton.textContent = "Forgot password?";
-  forgotButton.style.background = "transparent";
-  forgotButton.style.color = "inherit";
 
   signIn.insertAdjacentElement("afterend", forgotButton);
   forgotButton.insertAdjacentElement("afterend", switchButton);
@@ -415,42 +411,35 @@ updateStats();render("overview");
 
   function showScreen(createAccount) {
     registering = createAccount;
-    heading.textContent = createAccount
-      ? "Create Your Account"
-      : "Welcome Back!";
+    heading.textContent = createAccount ? "Create Your Account" : "Welcome Back!";
     description.textContent = createAccount
       ? "Join UTME 300 Study Centre and begin your study journey."
       : "Sign in to continue your UTME preparation.";
 
+    email.style.display = "";
+    password.style.display = "";
     signIn.style.display = createAccount ? "none" : "inline-block";
     signUp.style.display = createAccount ? "inline-block" : "none";
     forgotButton.style.display = createAccount ? "none" : "inline-block";
-
+    switchButton.style.display = "inline-block";
     switchButton.textContent = createAccount
       ? "Already have an account? Sign in"
       : "New student? Create an account";
-
     message.textContent = "";
   }
 
-  switchButton.addEventListener("click", () => {
-    showScreen(!registering);
-  });
+  switchButton.onclick = () => showScreen(!registering);
 
-  forgotButton.addEventListener("click", () => {
-    message.textContent =
-        forgotButton.addEventListener("click", async () => {
-    const studentEmail = document.getElementById("studentEmail").value.trim();
-
-    if (!studentEmail) {
+  forgotButton.onclick = async () => {
+    if (!email.value.trim()) {
       message.textContent = "Please enter your email address first.";
       return;
     }
 
     message.textContent = "Sending recovery email...";
 
-    const { error } = await window.utmeSupabase.auth.resetPasswordForEmail(
-      studentEmail,
+    const { error } = await client.auth.resetPasswordForEmail(
+      email.value.trim(),
       {
         redirectTo: "https://gistadivine-stack.github.io/utme-300-study-centre/"
       }
@@ -459,31 +448,96 @@ updateStats();render("overview");
     message.textContent = error
       ? error.message
       : "Recovery email sent! Check your inbox.";
-  });
-  const studentEmail = document.getElementById("studentEmail").value.trim();
+  };
 
-  if (!studentEmail) {
-    message.textContent = "Please enter your email address first.";
-    return;
+  function showPasswordReset() {
+    heading.textContent = "Set New Password";
+    description.textContent = "Enter and confirm your new password.";
+
+    email.style.display = "none";
+    password.style.display = "none";
+    signIn.style.display = "none";
+    signUp.style.display = "none";
+    forgotButton.style.display = "none";
+    switchButton.style.display = "none";
+
+    let newPassword = document.getElementById("newStudentPassword");
+    if (!newPassword) {
+      newPassword = document.createElement("input");
+      newPassword.id = "newStudentPassword";
+      newPassword.type = "password";
+      newPassword.placeholder = "New password (at least 8 characters)";
+      newPassword.style.cssText = "width:100%;padding:14px;margin:8px 0";
+      box.insertBefore(newPassword, message);
+    }
+
+    let confirmPassword = document.getElementById("confirmStudentPassword");
+    if (!confirmPassword) {
+      confirmPassword = document.createElement("input");
+      confirmPassword.id = "confirmStudentPassword";
+      confirmPassword.type = "password";
+      confirmPassword.placeholder = "Confirm new password";
+      confirmPassword.style.cssText = "width:100%;padding:14px;margin:8px 0";
+      box.insertBefore(confirmPassword, message);
+    }
+
+    newPassword.style.display = "";
+    confirmPassword.style.display = "";
+
+    let saveButton = document.getElementById("saveNewPassword");
+    if (!saveButton) {
+      saveButton = document.createElement("button");
+      saveButton.id = "saveNewPassword";
+      saveButton.textContent = "Save New Password";
+      box.insertBefore(saveButton, message);
+
+      saveButton.onclick = async () => {
+        const first = newPassword.value;
+        const second = confirmPassword.value;
+
+        if (first.length < 8) {
+          message.textContent = "Your password must be at least 8 characters.";
+          return;
+        }
+
+        if (first !== second) {
+          message.textContent = "The passwords do not match.";
+          return;
+        }
+
+        message.textContent = "Updating password...";
+
+        const { error } = await client.auth.updateUser({
+          password: first
+        });
+
+        if (error) {
+          message.textContent = error.message;
+          return;
+        }
+
+        await client.auth.signOut();
+        newPassword.style.display = "none";
+        confirmPassword.style.display = "none";
+        saveButton.style.display = "none";
+        showScreen(false);
+        message.textContent = "Password updated! Please sign in with your new password.";
+      };
+    }
+
+    saveButton.style.display = "inline-block";
+    message.textContent = "Your recovery link is verified. Choose a new password.";
   }
 
-  message.textContent = "Sending recovery email...";
-
-  const { error } = await window.utmeSupabase.auth.resetPasswordForEmail(
-    studentEmail,
-    {
-      redirectTo: "https://gistadivine-stack.github.io/utme-300-study-centre/"
+  client.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") {
+      showPasswordReset();
     }
-  );
-
-  message.textContent = error
-    ? error.message
-    : "Recovery email sent! Check your inbox.";
-});;
   });
 
   showScreen(false);
 })();
 </script>
+
 
 </body></html>
