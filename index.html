@@ -363,6 +363,8 @@ client.auth.onAuthStateChange((event) => {
     } catch (e) {}
 
     document.body.classList.toggle("login-required", !signedIn);
+   const welcome = document.getElementById("welcomeScreen");
+if (welcome && signedIn) welcome.style.display = "none";
 
     if (signedIn) {
       box.style.position = "static";
