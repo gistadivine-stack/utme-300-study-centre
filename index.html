@@ -134,4 +134,143 @@ function render(id){document.getElementById("content").innerHTML=id==="overview"
 document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>render(b.dataset.subject)));
 updateStats();render("overview");
 </script>
+<div id="accountBox" style="max-width:700px;margin:20px auto;padding:18px;border:1px solid #dce4ec;border-radius:14px;background:white;font-family:system-ui">
+  <h2>Student Account</h2>
+  <p>Sign in to save your study progress online and access it on another device.</p>
+  <input id="studentEmail" type="email" placeholder="Email address" style="width:100%;padding:12px;margin:6px 0">
+  <input id="studentPassword" type="password" placeholder="Password (at least 8 characters)" style="width:100%;padding:12px;margin:6px 0">
+  <button id="signUpBtn" style="padding:10px;margin:5px">Create account</button>
+  <button id="signInBtn" style="padding:10px;margin:5px">Sign in</button>
+  <button id="signOutBtn" style="padding:10px;margin:5px;display:none">Sign out</button>
+  <p id="accountMessage" role="status"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const SUPABASE_URL = "https://qlctgxmtypsmdixtwlqj.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_edSpm2__M81f1nkWJnuZXA_Xhdv_pi6";
+
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const message = document.getElementById("accountMessage");
+  const email = document.getElementById("studentEmail");
+  const password = document.getElementById("studentPassword");
+  const signOutBtn = document.getElementById("signOutBtn");
+
+  const subjectNames = {
+    crs: "CRS",
+    literature: "Literature",
+    government: "Government",
+    english: "Use of English"
+  };
+
+  async function uploadProgress(user) {
+    const rows = [];
+    for (const [subject, name] of Object.entries(subjectNames)) {
+      for (let i = 0; i < 7; i++) {
+        rows.push({
+          user_id: user.id,
+          subject: name,
+          session_number: i + 1,
+          completed: !!progress[subject + "-" + i],
+          updated_at: new Date().toISOString()
+        });
+      }
+    }
+    const { error } = await client
+      .from("student_progress")
+      .upsert(rows, { onConflict: "user_id,subject,session_number" });
+    if (error) throw error;
+  }
+
+  async function downloadProgress(user) {
+    const { data, error } = await client
+      .from("student_progress")
+      .select("subject,session_number,completed")
+      .eq("user_id", user.id);
+
+    if (error) throw error;
+
+    data.forEach(row => {
+      const key = Object.keys(subjectNames).find(
+        k => subjectNames[k] === row.subject
+      );
+      if (key) {
+        const progressKey = key + "-" + (row.session_number - 1);
+        if (row.completed) progress[progressKey] = true;
+        else delete progress[progressKey];
+      }
+    });
+
+    save();
+    await uploadProgress(user);
+    render(document.querySelector(".navbtn.active")?.dataset.subject || "overview");
+  }
+
+  async function refreshAccount() {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) {
+      message.textContent = "Signed in as " + session.user.email;
+      signOutBtn.style.display = "inline-block";
+      try {
+        await downloadProgress(session.user);
+        message.textContent = "Signed in. Your progress is synced online.";
+      } catch (error) {
+        message.textContent = "Sync error: " + error.message;
+      }
+    } else {
+      message.textContent = "You are not signed in. Your progress is saved on this device.";
+      signOutBtn.style.display = "none";
+    }
+  }
+
+  document.getElementById("signUpBtn").onclick = async () => {
+    message.textContent = "Creating your account...";
+    const { data, error } = await client.auth.signUp({
+      email: email.value.trim(),
+      password: password.value,
+      options: { emailRedirectTo: "https://gistadivine-stack.github.io/utme-300-study-centre/" }
+    });
+    if (error) {
+      message.textContent = error.message;
+    } else if (!data.session) {
+      message.textContent = "Account created. Check your email for the confirmation link, then sign in.";
+    } else {
+      message.textContent = "Account created. Syncing progress...";
+      await refreshAccount();
+    }
+  };
+
+  document.getElementById("signInBtn").onclick = async () => {
+    message.textContent = "Signing in...";
+    const { error } = await client.auth.signInWithPassword({
+      email: email.value.trim(),
+      password: password.value
+    });
+    if (error) message.textContent = error.message;
+    else await refreshAccount();
+  };
+
+  signOutBtn.onclick = async () => {
+    const { error } = await client.auth.signOut();
+    message.textContent = error ? error.message : "Signed out.";
+    signOutBtn.style.display = "none";
+  };
+
+  const oldToggleDone = window.toggleDone;
+  window.toggleDone = function(key, checked) {
+    oldToggleDone(key, checked);
+    client.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        uploadProgress(data.session.user).catch(error => {
+          message.textContent = "Progress sync error: " + error.message;
+        });
+      }
+    });
+  };
+
+  refreshAccount();
+})();
+</script>
+
 </body></html>
