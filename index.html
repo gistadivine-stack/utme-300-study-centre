@@ -439,7 +439,27 @@ updateStats();render("overview");
 
   forgotButton.addEventListener("click", () => {
     message.textContent =
-      forgotButton.addEventListener("click", async () => {
+        forgotButton.addEventListener("click", async () => {
+    const studentEmail = document.getElementById("studentEmail").value.trim();
+
+    if (!studentEmail) {
+      message.textContent = "Please enter your email address first.";
+      return;
+    }
+
+    message.textContent = "Sending recovery email...";
+
+    const { error } = await window.utmeSupabase.auth.resetPasswordForEmail(
+      studentEmail,
+      {
+        redirectTo: "https://gistadivine-stack.github.io/utme-300-study-centre/"
+      }
+    );
+
+    message.textContent = error
+      ? error.message
+      : "Recovery email sent! Check your inbox.";
+  });
   const studentEmail = document.getElementById("studentEmail").value.trim();
 
   if (!studentEmail) {
