@@ -381,6 +381,15 @@ if (welcome && signedIn) welcome.style.display = "none";
   }
 
   updateLoginScreen();
+ const welcome = document.getElementById("welcomeScreen");
+const startButton = document.getElementById("welcomeStartBtn");
+
+if (welcome && startButton) {
+  startButton.addEventListener("click", () => {
+    welcome.style.display = "none";
+    document.getElementById("studentEmail").focus();
+  });
+}
 
   if (message) {
     new MutationObserver(updateLoginScreen).observe(message, {
