@@ -152,6 +152,13 @@ updateStats();render("overview");
   const SUPABASE_KEY = "sb_publishable_edSpm2__M81f1nkWJnuZXA_Xhdv_pi6";
 
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.utmeSupabase = client;
+
+client.auth.onAuthStateChange((event) => {
+  if (event === "PASSWORD_RECOVERY") {
+    window.utmePasswordRecovery = true;
+  }
+});
  window.utmeSupabase = client;
   const message = document.getElementById("accountMessage");
   const email = document.getElementById("studentEmail");
