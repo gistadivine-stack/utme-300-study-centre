@@ -439,7 +439,27 @@ updateStats();render("overview");
 
   forgotButton.addEventListener("click", () => {
     message.textContent =
-      "Password recovery will be added next. Please contact your study centre administrator if you need help accessing your account.";
+      forgotButton.addEventListener("click", async () => {
+  const studentEmail = document.getElementById("studentEmail").value.trim();
+
+  if (!studentEmail) {
+    message.textContent = "Please enter your email address first.";
+    return;
+  }
+
+  message.textContent = "Sending recovery email...";
+
+  const { error } = await window.utmeSupabase.auth.resetPasswordForEmail(
+    studentEmail,
+    {
+      redirectTo: "https://gistadivine-stack.github.io/utme-300-study-centre/"
+    }
+  );
+
+  message.textContent = error
+    ? error.message
+    : "Recovery email sent! Check your inbox.";
+});;
   });
 
   showScreen(false);
