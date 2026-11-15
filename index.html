@@ -380,4 +380,69 @@ updateStats();render("overview");
 })();
 </script>
 
+<script>
+(() => {
+  const box = document.getElementById("accountBox");
+  const signIn = document.getElementById("signInBtn");
+  const signUp = document.getElementById("signUpBtn");
+  const message = document.getElementById("accountMessage");
+
+  if (!box || !signIn || !signUp) return;
+
+  const heading = box.querySelector("h2");
+  const description = box.querySelector("p");
+
+  const switchButton = document.createElement("button");
+  switchButton.id = "switchAccountScreen";
+  switchButton.type = "button";
+  switchButton.style.marginTop = "12px";
+  switchButton.style.background = "transparent";
+  switchButton.style.color = "inherit";
+  switchButton.style.border = "1px solid currentColor";
+
+  const forgotButton = document.createElement("button");
+  forgotButton.id = "forgotPasswordInfo";
+  forgotButton.type = "button";
+  forgotButton.textContent = "Forgot password?";
+  forgotButton.style.background = "transparent";
+  forgotButton.style.color = "inherit";
+
+  signIn.insertAdjacentElement("afterend", forgotButton);
+  forgotButton.insertAdjacentElement("afterend", switchButton);
+
+  let registering = false;
+
+  function showScreen(createAccount) {
+    registering = createAccount;
+    heading.textContent = createAccount
+      ? "Create Your Account"
+      : "Welcome Back!";
+    description.textContent = createAccount
+      ? "Join UTME 300 Study Centre and begin your study journey."
+      : "Sign in to continue your UTME preparation.";
+
+    signIn.style.display = createAccount ? "none" : "inline-block";
+    signUp.style.display = createAccount ? "inline-block" : "none";
+    forgotButton.style.display = createAccount ? "none" : "inline-block";
+
+    switchButton.textContent = createAccount
+      ? "Already have an account? Sign in"
+      : "New student? Create an account";
+
+    message.textContent = "";
+  }
+
+  switchButton.addEventListener("click", () => {
+    showScreen(!registering);
+  });
+
+  forgotButton.addEventListener("click", () => {
+    message.textContent =
+      "Password recovery will be added next. Please contact your study centre administrator if you need help accessing your account.";
+  });
+
+  showScreen(false);
+})();
+</script>
+
 </body></html>
