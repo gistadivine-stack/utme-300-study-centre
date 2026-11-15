@@ -273,4 +273,111 @@ updateStats();render("overview");
 })();
 </script>
 
+<style>
+  body.login-required {
+    background: linear-gradient(135deg, #102b46, #1e5b86);
+  }
+
+  body.login-required header,
+  body.login-required .wrap {
+    display: none !important;
+  }
+
+  body.login-required #accountBox {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh;
+    margin: 0 !important;
+    padding: 35px 22px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: linear-gradient(135deg, #102b46, #1e5b86) !important;
+    color: white !important;
+  }
+
+  body.login-required #accountBox input {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+  }
+
+  body.login-required #accountBox h2 {
+    font-size: 30px;
+    text-align: center;
+  }
+
+  body.login-required #accountBox p {
+    text-align: center;
+  }
+
+  body.login-required #accountBox button {
+    margin: 7px 0;
+    padding: 13px;
+    background: #f2b84b;
+    color: #102b46;
+    font-weight: bold;
+  }
+
+  #accountBox {
+    transition: all .2s ease;
+  }
+</style>
+
+<script>
+(() => {
+  const authKey = "sb-qlctgxmtypsmdixtwlqj-auth-token";
+  const box = document.getElementById("accountBox");
+  const message = document.getElementById("accountMessage");
+
+  function updateLoginScreen() {
+    let signedIn = false;
+
+    try {
+      const session = JSON.parse(localStorage.getItem(authKey) || "null");
+      signedIn = !!(session && session.access_token && session.user);
+    } catch (e) {}
+
+    document.body.classList.toggle("login-required", !signedIn);
+
+    if (signedIn) {
+      box.style.position = "static";
+      box.style.inset = "auto";
+      box.style.maxWidth = "700px";
+      box.style.minHeight = "0";
+      box.style.margin = "20px auto";
+      box.style.padding = "18px";
+      box.style.background = "white";
+      box.style.color = "#172536";
+      box.style.border = "1px solid #dce4ec";
+      box.style.borderRadius = "14px";
+    }
+  }
+
+  updateLoginScreen();
+
+  if (message) {
+    new MutationObserver(updateLoginScreen).observe(message, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+  }
+
+  ["signInBtn", "signUpBtn", "signOutBtn"].forEach(id => {
+    document.getElementById(id).addEventListener("click", () => {
+      setTimeout(updateLoginScreen, 1200);
+    });
+  });
+})();
+</script>
+
 </body></html>
