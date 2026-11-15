@@ -1,0 +1,331 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b46">
+  <title>Admin Dashboard | UTME 300</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f1f5f9;
+      font-family: Arial, sans-serif;
+      color: #102b46;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 30px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 14px #102b4610;
+    }
+
+    h1, h2 { margin-top: 0; }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0;
+      border: 1px solid #ccd5df;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 7px;
+      background: #1e5b86;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+    }
+
+    button.secondary { background: #64748b; }
+
+    #dashboard { display: none; }
+
+    #message {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .student {
+      border: 1px solid #dce4ec;
+      border-radius: 9px;
+      padding: 15px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .bar {
+      height: 10px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .fill {
+      height: 100%;
+      background: #1e8b61;
+    }
+
+    .muted {
+      color: #64748b;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="card">
+    <h1>UTME 300 Admin Dashboard</h1>
+    <p>Administrator access to student study progress.</p>
+  </div>
+
+  <div class="card" id="loginBox">
+    <h2>Administrator Login</h2>
+
+    <input id="email" type="email"
+      placeholder="Administrator email">
+
+    <input id="password" type="password"
+      placeholder="Password">
+
+    <button id="loginBtn">Sign In</button>
+
+    <p id="message" role="status"></p>
+  </div>
+
+  <div id="dashboard">
+    <div class="card">
+      <h2>Student Progress Overview</h2>
+      <p id="welcome"></p>
+      <button id="refreshBtn">Refresh Progress</button>
+      <button id="logoutBtn" class="secondary">Sign Out</button>
+      <p id="status" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Students with Saved Progress</h2>
+      <div id="studentList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+  "https://qlctgxmtypsmdixtwlqj.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_edSpm2__M81f1nkWJnuZXA_Xhdv_pi6";
+
+const client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
+const status = document.getElementById("status");
+const studentList = document.getElementById("studentList");
+
+const subjects = [
+  "CRS",
+  "Literature in English",
+  "Government",
+  "Use of English"
+];
+
+async function checkAdmin() {
+  const { data: sessionData } =
+    await client.auth.getSession();
+
+  const user = sessionData.session?.user;
+
+  if (!user) {
+    showLogin("Please sign in with the administrator account.");
+    return;
+  }
+
+  const { data, error } = await client
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error || !data) {
+    await client.auth.signOut();
+    showLogin("Access denied. This account is not an administrator.");
+    return;
+  }
+
+  loginBox.style.display = "none";
+  dashboard.style.display = "block";
+
+  document.getElementById("welcome").textContent =
+    "Administrator: " + user.email;
+
+  await loadProgress();
+}
+
+function showLogin(text) {
+  loginBox.style.display = "block";
+  dashboard.style.display = "none";
+  message.textContent = text;
+}
+
+async function loadProgress() {
+  status.textContent = "Loading student progress...";
+  studentList.textContent = "";
+
+  const { data, error } = await client
+    .from("student_progress")
+    .select("user_id,subject,session_number,completed,updated_at");
+
+  if (error) {
+    status.textContent = "Could not load progress: " + error.message;
+    return;
+  }
+
+  const students = {};
+
+  data.forEach(row => {
+    if (!students[row.user_id]) {
+      students[row.user_id] = {
+        completed: 0,
+        total: 0,
+        subjects: {},
+        updated: row.updated_at
+      };
+    }
+
+    const student = students[row.user_id];
+
+    student.total++;
+
+    if (row.completed) student.completed++;
+
+    if (!student.subjects[row.subject]) {
+      student.subjects[row.subject] = {
+        completed: 0,
+        total: 0
+      };
+    }
+
+    student.subjects[row.subject].total++;
+
+    if (row.completed) {
+      student.subjects[row.subject].completed++;
+    }
+
+    if (row.updated_at > student.updated) {
+      student.updated = row.updated_at;
+    }
+  });
+
+  const ids = Object.keys(students);
+
+  if (!ids.length) {
+    status.textContent = "No saved student progress found yet.";
+    return;
+  }
+
+  status.textContent =
+    ids.length + " student account(s) with saved progress.";
+
+  ids.forEach(id => {
+    const student = students[id];
+    const percentage = student.total
+      ? Math.round(student.completed / student.total * 100)
+      : 0;
+
+    const card = document.createElement("div");
+    card.className = "student";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Student account";
+
+    const identity = document.createElement("p");
+    identity.className = "muted";
+    identity.textContent = "User ID: " + id;
+
+    const score = document.createElement("p");
+    score.textContent =
+      student.completed + " of " + student.total +
+      " recorded sessions completed (" + percentage + "%)";
+
+    const bar = document.createElement("div");
+    bar.className = "bar";
+
+    const fill = document.createElement("div");
+    fill.className = "fill";
+    fill.style.width = percentage + "%";
+
+    bar.appendChild(fill);
+
+    card.append(heading, identity, score, bar);
+
+    subjects.forEach(subjectName => {
+      const result = student.subjects[subjectName];
+
+      const detail = document.createElement("p");
+      detail.className = "muted";
+
+      detail.textContent = result
+        ? subjectName + ": " + result.completed +
+          " of " + result.total + " sessions completed"
+        : subjectName + ": No recorded progress";
+
+      card.appendChild(detail);
+    });
+
+    studentList.appendChild(card);
+  });
+}
+
+document.getElementById("loginBtn").onclick = async () => {
+  message.textContent = "Signing in...";
+
+  const { error } = await client.auth.signInWithPassword({
+    email: document.getElementById("email").value.trim(),
+    password: document.getElementById("password").value
+  });
+
+  if (error) {
+    message.textContent = error.message;
+    return;
+  }
+
+  await checkAdmin();
+};
+
+document.getElementById("refreshBtn").onclick = loadProgress;
+
+document.getElementById("logoutBtn").onclick = async () => {
+  await client.auth.signOut();
+  showLogin("You have signed out.");
+};
+
+checkAdmin();
+</script>
+</body>
+</html>
